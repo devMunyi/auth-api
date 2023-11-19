@@ -8,14 +8,12 @@ const createUserHandler = async(req: Request<{}, {}, CreateUserInput>, res:Respo
     try {
         const user = await createUser(body);
 
-        const response = await sendEmail({
+        const preview = await sendEmail({
             from: "test@example.com",
             to: user.email,
             subject: 'Please Verify Your Account',
             text: `verification code ${user.verificationCode}. Id: ${user._id}`
         });
-
-        const preview = response.preview;
 
         return res.status(201).json({ user,  preview})
     } catch (e: any) {
