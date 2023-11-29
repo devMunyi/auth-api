@@ -27,12 +27,7 @@ const sendMailAsync = util.promisify(transporter.sendMail).bind(transporter);
 
 
 // Define a type for the response
-interface SendEmailResponse {
-    status: string | null;
-    preview: string | null;
-}
-
-async function sendEmail(payload: SendMailOptions): Promise<SendEmailResponse> {
+async function sendEmail(payload: SendMailOptions): Promise<string | null> {
     try {
         const info: SentMessageInfo = await sendMailAsync(payload);
         let preview = nodemailer.getTestMessageUrl(info);
@@ -40,10 +35,10 @@ async function sendEmail(payload: SendMailOptions): Promise<SendEmailResponse> {
             preview = '';
         }
         log.info(`Preview URL: ${preview}`);
-        return { status: 'OK', preview };
+        return preview ;
     } catch (err: any) {
         log.error(err.message, 'Error sending email');
-        return { status: null, preview: null };
+        return null;
     }
 }
 

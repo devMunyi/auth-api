@@ -23,4 +23,12 @@ export const CreateUserSchema = object({
     })
 })
 
+export const VerifyUserSchema = object({
+    params: object({
+        id: string()?.trim()?.min(1, "User Id is required!"),
+        verificationCode: string()?.trim()?.min(1, "Verification code is required!")
+    })
+})
+
 export type CreateUserInput = TypeOf<typeof CreateUserSchema>['body'];
+export type VerifyUserInput = TypeOf<typeof VerifyUserSchema>['params'];
