@@ -1,7 +1,10 @@
 import { Request, Response } from "express"
 import { CreateUserInput, VerifyUserInput } from "../schema/user.schema"
-import { createUser, findUserById } from "../services/user.service";
+import { createUser, findUserByEmail, findUserById } from "../services/user.service";
 import sendEmail from "../utils/mailer";
+import { log } from "../utils/logger";
+import { nanoid } from "nanoid";
+import { smtp } from "../utils/smtp";
 
 export async function createUserHandler(req: Request<{}, {}, CreateUserInput>, res: Response) {
     const body = req.body;
@@ -58,4 +61,47 @@ export async function verifyUserHandler(req: Request<VerifyUserInput>, res: Resp
         return res.status(500).json(e.message)
     }
 
+}
+
+
+export async function forgotPasswordHandler(req: Request, res: Response) {
+    const { email } = req.body;
+    const message = "If a user is registered with that email you will receive a password reset email;"
+    const passwordResetCode = nanoid();
+
+    try {
+
+        // check if user exists
+        const user = await findUserByEmail(email);
+        
+        if(!user){
+            return res.status(200).json(message);
+        }   
+        
+        // check if user is not verified
+        if(!user.verified){
+            log.debug(`User with email ${email} does not exists!`);
+            return res.status(200).json("User not verified");
+        }
+
+        // set user password reset code
+        user.passwordResetCode = passwordResetCode;
+        await user.save(); // persist it in the database
+
+        const sendEmailResp = await sendEmail({
+            from: `"${smtp.appName}" <${smtp.user}>`,
+            to: email,
+            subject: 'Forgot Password Request',
+            text: `Password reset code ${user.passwordResetCode}. Id: ${user._id}`
+        })
+        
+        if(sendEmailResp){
+            return res.status(200).json(message); 
+        }
+
+        return res.status(400).json("Password reset failed! Please try again.")
+
+    } catch (e: any) {
+        return res.status(500).json(e.message)
+    }
 }

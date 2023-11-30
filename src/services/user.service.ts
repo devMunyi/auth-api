@@ -10,3 +10,8 @@ export async function findUserById(id:string) {
     return await UserModel.findById(id);
 }
 
+
+export async function findUserByEmail(email:string) {
+    return await UserModel.findOne({ email })
+}
+
